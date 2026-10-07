@@ -242,11 +242,38 @@ async function initFile(){
   if(await permOf(fileHandle,false)==='granted')await syncFromFile();
   else{fileState='needperm';renderFileStatus()}
 }
+// Schreibrecht prüfen/anfragen – mehrere Wege, weil Chrome auf Android sich hier unterschiedlich verhält
+async function ensureWrite(h){
+  try{if(!h.queryPermission||await h.queryPermission({mode:'readwrite'})==='granted')return true}catch(e){}
+  try{if(h.requestPermission&&await h.requestPermission({mode:'readwrite'})==='granted')return true}catch(e){}
+  try{const w=await h.createWritable();await w.abort();return true}catch(e){}
+  return false;
+}
 async function reconnectFile(){
   if(!fileHandle)return createFile();
-  if(await permOf(fileHandle,true)==='granted')await syncFromFile();
-  else toast('Zugriff auf die Datei nicht erlaubt');
+  if(await ensureWrite(fileHandle))return syncFromFile();
+  // Chrome gibt die alte Freigabe nicht zurück → Datei einmal neu auswählen lassen
+  fileState='repick';renderFileStatus();
+  try{await pickExisting(true)}catch(e){}
 }
+async function showPicker(){
+  const o={types:FILE_TYPES,multiple:false};
+  if(fileHandle){try{return (await window.showOpenFilePicker({...o,startIn:fileHandle}))[0]}catch(e){if(e&&e.name!=='TypeError')throw e}}
+  return (await window.showOpenFilePicker(o))[0];
+}
+async function pickExisting(reconnect){
+  let h,d;
+  try{h=await showPicker()}catch(e){if(e&&e.name==='AbortError')return;throw e}
+  try{d=await readFileData(h)}catch(e){return toast('Datei ist keine gültige Baustunden-Datei')}
+  if(!reconnect&&d&&S.entries.length&&!confirm(`Daten aus „${h.name}“ laden?\n\nDie Daten, die gerade in der App sind, werden dadurch ersetzt.`))return;
+  const canWrite=await ensureWrite(h);
+  fileHandle=h;try{await idbSet('handle',h)}catch(e){}
+  if(d&&(!reconnect||!S.savedAt||(d.savedAt||0)>S.savedAt))adopt(d);
+  if(canWrite){fileState='ok';await flushWrite();toast(reconnect?'Datendatei wieder verbunden':'Datendatei geöffnet')}
+  else{fileState='readonly';toast('Datei gelesen – Chrome erlaubt kein Schreiben hinein')}
+  render();
+}
+function repickFile(){pickExisting(true).catch(()=>toast('Datei konnte nicht geöffnet werden'))}
 async function createFile(){
   try{
     const h=await window.showSaveFilePicker({suggestedName:'baustunden-daten.json',types:FILE_TYPES});
@@ -255,17 +282,7 @@ async function createFile(){
     toast('Datendatei angelegt – ab jetzt wird automatisch gespeichert');render();
   }catch(e){if(e&&e.name!=='AbortError')toast('Datei konnte nicht angelegt werden')}
 }
-async function openFile(){
-  try{
-    const [h]=await window.showOpenFilePicker({types:FILE_TYPES,multiple:false});
-    if(await permOf(h,true)!=='granted')return toast('Kein Schreibzugriff auf die Datei');
-    const d=await readFileData(h);
-    if(d&&S.entries.length&&!confirm(`Daten aus „${h.name}“ laden?\n\nDie Daten, die gerade in der App sind, werden dadurch ersetzt.`))return;
-    fileHandle=h;await idbSet('handle',h);fileState='ok';
-    if(d)adopt(d);
-    await flushWrite();render();toast(d?'Datendatei geöffnet':'Datendatei verbunden');
-  }catch(e){if(e&&e.name!=='AbortError')toast('Datei ist keine gültige Baustunden-Datei')}
-}
+function openFile(){pickExisting(false).catch(()=>toast('Datei konnte nicht geöffnet werden'))}
 async function disconnectFile(){
   if(!confirm('Verbindung zur Datendatei trennen?\n\nDie Datei bleibt auf dem Handy erhalten, wird aber nicht mehr automatisch aktualisiert.'))return;
   if(writeTimer)await flushWrite();
@@ -277,7 +294,9 @@ function fileStatusHTML(){
   if(!FS_OK)return `<div class="fbar info">Daten sind im Browser auf diesem Handy gespeichert. Für eine echte Datendatei die App in <b>Chrome</b> (ab Version 132) öffnen.</div>`;
   const nm=fileHandle?esc(fileHandle.name):'';
   if(fileState==='ok')return `<div class="fbar ok"><span>✓ Gespeichert in Datei <b>${nm}</b>${fileSavedAt?' · '+hhmm(fileSavedAt):''}</span></div>`;
-  if(fileState==='needperm')return `<div class="fbar warn2"><span>Datendatei <b>${nm}</b> – Zugriff bestätigen</span><button type="button" data-fs="reconnect">Verbinden</button></div>`;
+  if(fileState==='needperm')return `<div class="fbar warn2"><span>Datei-Sicherung pausiert (<b>${nm}</b>). Deine Daten sind in der App gespeichert.</span><button type="button" data-fs="reconnect">Fortsetzen</button></div>`;
+  if(fileState==='repick')return `<div class="fbar warn2"><span>Bitte <b>${nm}</b> einmal neu auswählen, damit die App wieder hineinspeichern darf.</span><button type="button" data-fs="repick">Auswählen</button></div>`;
+  if(fileState==='readonly')return `<div class="fbar warn2"><span>Chrome erlaubt kein Schreiben in <b>${nm}</b>. Leg eine neue Datendatei an.</span><button type="button" data-fs="create">Neu anlegen</button></div>`;
   if(fileState==='error')return `<div class="fbar warn2"><span>Speichern in die Datei fehlgeschlagen</span><button type="button" data-fs="reconnect">Erneut</button></div>`;
   return `<div class="fbar warn2"><span>Daten liegen nur im Browser. Als Datei auf dem Handy sichern?</span><button type="button" data-fs="create">Datei anlegen</button></div>`;
 }
@@ -286,7 +305,7 @@ function renderFileStatus(){
   const c=$('#fcard');if(c){c.innerHTML=fileCardHTML();bindFs(c)}
 }
 function bindFs(root){
-  root.querySelectorAll('[data-fs]').forEach(x=>x.onclick=()=>({create:createFile,open:openFile,reconnect:reconnectFile,disconnect:disconnectFile})[x.dataset.fs]());
+  root.querySelectorAll('[data-fs]').forEach(x=>x.onclick=()=>({create:createFile,open:openFile,reconnect:reconnectFile,repick:repickFile,disconnect:disconnectFile})[x.dataset.fs]());
 }
 function fileCardHTML(){
   if(!FS_OK)return `<h2>Datendatei</h2><p class="muted small">Dieser Browser kann nicht direkt in eine Datei schreiben. Öffne die App in Chrome (ab Version 132) – oder speichere regelmäßig eine Sicherung (unten).</p>`;
@@ -294,8 +313,10 @@ function fileCardHTML(){
   let h=`<h2>Datendatei auf dem Handy</h2>`;
   if(fileHandle){
     h+=`<p class="small">${fileState==='ok'?'✓ Verbunden mit':'Nicht verbunden:'} <b>${nm}</b>${fileSavedAt&&fileState==='ok'?' · zuletzt gespeichert '+hhmm(fileSavedAt):''}</p>
-      <p class="muted small">Jede Änderung wird automatisch in diese Datei geschrieben. Sie liegt im Handyspeicher (z. B. unter „Dokumente“) und bleibt erhalten, auch wenn Browserdaten gelöscht werden. Danach einfach hier „Vorhandene Datendatei öffnen“ wählen.</p>
-      ${fileState!=='ok'?'<button type="button" class="btn primary" data-fs="reconnect">Wieder verbinden</button>':''}
+      <p class="muted small">Jede Änderung wird automatisch in diese Datei geschrieben. Sie liegt im Handyspeicher (z. B. unter „Dokumente“) und bleibt erhalten, auch wenn die App gelöscht wird. Fragt Chrome nach einem Neustart erneut, einfach „Fortsetzen“ tippen bzw. die Datei einmal neu auswählen.</p>
+      ${fileState==='needperm'||fileState==='error'?'<button type="button" class="btn primary" data-fs="reconnect">Wieder verbinden</button>':''}
+      ${fileState==='repick'?'<button type="button" class="btn primary" data-fs="repick">Datei neu auswählen</button>':''}
+      ${fileState==='readonly'?'<button type="button" class="btn primary" data-fs="create">Neue Datendatei anlegen</button>':''}
       <button type="button" class="btn ghost" data-fs="open">Andere Datendatei öffnen</button>
       <button type="button" class="btn ghost small" data-fs="disconnect">Verbindung trennen</button>`;
   }else{
@@ -472,8 +493,9 @@ function viewBaustellen(){
   });
   html+=`<section class="card" id="fcard">${fileCardHTML()}</section>
   <section class="card"><h2>Export &amp; Sicherung</h2>
-    <p class="muted small">Zusätzlich kannst du ab und zu eine Sicherung z. B. per Mail an dich selbst schicken.</p>
+    <p class="muted small">Zusätzlich kannst du ab und zu eine Sicherung teilen – z. B. in dein Google Drive oder per Mail an dich selbst.</p>
     <button type="button" class="btn" id="exCsv">Tabelle exportieren (CSV für Excel)</button>
+    <button type="button" class="btn" id="shJson">Sicherung teilen (Drive, Mail, WhatsApp …)</button>
     <button type="button" class="btn" id="exJson">Sicherung speichern</button>
     <button type="button" class="btn ghost" id="imJson">Sicherung laden</button>
   </section>`;
@@ -688,8 +710,17 @@ function bindBaustellen(){
   });
   $('#exCsv').onclick=exportCsv;
   $('#exJson').onclick=backup;
+  $('#shJson').onclick=shareBackup;
   $('#imJson').onclick=()=>$('#importFile').click();
   bindRates();recalcAll();
+}
+function backupBlobFile(){return new File([JSON.stringify(S,null,1)],`baustunden-sicherung-${todayISO()}.json`,{type:'application/json'})}
+async function shareBackup(){
+  const f=backupBlobFile();
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    try{await navigator.share({files:[f],title:'Baustunden-Sicherung'});toast('Sicherung geteilt')}
+    catch(e){if(e&&e.name!=='AbortError')backup()}
+  }else backup();
 }
 function backup(){download(`baustunden-sicherung-${todayISO()}.json`,JSON.stringify(S,null,1),'application/json')}
 function download(name,text,type){

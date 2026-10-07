@@ -1,6 +1,6 @@
 // Offline-Speicher für die App-Dateien. Die Baustunden-Daten selbst liegen NICHT hier,
 // sondern im Browser-Speicher bzw. in der Datendatei auf dem Handy.
-const CACHE = 'baustunden-app-v1';
+const CACHE = 'baustunden-app-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
