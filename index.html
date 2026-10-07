@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f3a5f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Baustunden">
+<title>Baustunden</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#f2f0eb;--card:#fff;--ink:#1c2228;--muted:#6a737d;--line:#dfdbd2;--field:#faf9f6;--accent:#e67e22;--navy:#1f3a5f;--ok:#2e7d4f;--danger:#c0392b;--chip:#fbefe1;--chipline:#f0d2b0}
+@media (prefers-color-scheme:dark){:root{--bg:#121519;--card:#1b1f25;--ink:#eceff2;--muted:#98a2ad;--line:#2d343c;--field:#14181d;--navy:#16273d;--chip:#2c241b;--chipline:#4a3a28}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:calc(env(safe-area-inset-top) + 8px) 12px 0;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.monthbar{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto}
+.monthbar h1{flex:1;margin:0;text-align:center;font-size:19px;font-weight:700;line-height:44px}
+.iconbtn{width:44px;height:44px;flex:none;border:0;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1}
+.iconbtn:disabled{opacity:.25}
+.iconbtn.plus{background:var(--accent);font-size:28px;font-weight:600}
+body.tab-bst .iconbtn,body.tab-bst .mstrip{display:none}
+.mstrip{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;-webkit-overflow-scrolling:touch}
+.mstrip::-webkit-scrollbar{display:none}
+.mtab{flex:none;border:0;border-radius:10px;padding:0 13px;height:44px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);font-weight:600;font-size:15px;white-space:nowrap}
+.mtab small{display:block;font-size:11px;font-weight:500;opacity:.75;line-height:1}
+.mtab.active{background:#fff;color:var(--navy)}
+.mtab.fut{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mbtn{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:12px;padding:14px 4px;font-size:16px;font-weight:600}
+.mbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.mbtn:disabled{opacity:.3}
+.mbtn small{display:block;font-size:11px;font-weight:500;opacity:.85}
+.erow{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.erow .entry{border-top:0;flex:1;min-width:0}
+.trash{flex:none;width:46px;border:0;background:none;color:var(--muted);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.trash:active{background:rgba(192,57,43,.12);color:var(--danger)}
+.trash svg{width:21px;height:21px}
+.plan{display:inline-block;font-size:11px;font-weight:700;color:var(--navy);background:rgba(31,58,95,.12);border-radius:6px;padding:1px 6px;margin-top:3px}
+@media (prefers-color-scheme:dark){.plan{color:#9cc0ec;background:rgba(156,192,236,.15)}}
+.tabs{display:flex;max-width:640px;margin:6px auto 0}
+.tabs button{flex:1;background:none;border:0;border-bottom:3px solid transparent;color:rgba(255,255,255,.65);padding:11px 0;font-weight:600;font-size:15px}
+.tabs button.active{color:#fff;border-color:var(--accent)}
+main{max-width:640px;margin:0 auto;padding:12px 12px calc(28px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.card h2{margin:0 0 6px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+label{display:block;margin:12px 0 5px;font-size:13px;font-weight:600;color:var(--muted)}
+input,textarea,.field{width:100%;font:inherit;font-size:17px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;outline:none;-webkit-appearance:none;appearance:none}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
+input:disabled{opacity:.6}
+textarea{min-height:84px;resize:vertical}
+.datebtn{display:flex;justify-content:space-between;align-items:center;text-align:left;font-weight:600}
+.datebtn.empty{color:var(--muted);font-weight:400}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips:empty{display:none}
+.chipw{display:inline-flex;align-items:stretch;border:1px solid var(--chipline);background:var(--chip);border-radius:999px;overflow:hidden}
+.chip{border:0;background:none;color:var(--ink);padding:8px 6px 8px 13px;font-size:15px}
+.chipx{border:0;border-left:1px solid var(--chipline);background:none;color:var(--muted);width:38px;display:flex;align-items:center;justify-content:center}
+.chipx svg{width:16px;height:16px}
+.chipx:active{background:rgba(192,57,43,.14);color:var(--danger)}
+.newhint{font-size:13px;color:var(--accent);font-weight:600;padding:4px 2px}
+.preview{margin-top:10px;font-size:14px;color:var(--muted)}
+.preview:empty{display:none}
+.preview b{color:var(--ink)}
+.btn{display:block;width:100%;margin-top:12px;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:16px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{background:none;border-color:var(--danger);color:var(--danger)}
+.btn.ghost{background:none}
+.btn.small{padding:10px;font-size:14px}
+.muted{color:var(--muted)}.small{font-size:13px}
+.sumrow{padding:10px 0;border-top:1px solid var(--line)}
+.sn{font-weight:700;margin-bottom:6px;word-break:break-word}
+.sline{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--muted)}
+.sline .amt{margin-left:auto;color:var(--ink);font-size:16px}
+input.rate{width:84px;flex:none;padding:7px 8px;font-size:16px;text-align:right}
+.sumtotal,.gesamt{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 0 2px;border-top:2px solid var(--ink);font-weight:700}
+.sumtotal span:first-child,.gesamt span:first-child{flex:1}
+.grand{font-size:18px;color:var(--accent)}
+.entry{display:flex;width:100%;gap:10px;align-items:flex-start;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:12px 4px;color:var(--ink)}
+.entry.editing{background:var(--chip);border-radius:10px}
+.ed{flex:none;width:72px;font-weight:600;font-size:14px;color:var(--muted)}
+.eb{flex:1;min-width:0}.eb b{display:block;word-break:break-word}
+.eb small{display:block;color:var(--muted);white-space:pre-wrap;word-break:break-word;font-size:14px}
+.eh{flex:none;text-align:right;font-weight:600}.eh small{display:block;color:var(--muted);font-weight:400;font-size:14px}
+.sitehead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sitehead h3{margin:0;font-size:18px;word-break:break-word}
+.badge{flex:none;font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;font-style:normal}
+.badge.open{background:rgba(46,125,79,.14);color:var(--ok)}
+.badge.done{background:var(--line);color:var(--muted)}
+.raterow{display:flex;align-items:center;gap:8px;margin:12px 0 6px}
+.raterow label{margin:0;flex:1}
+.mrow{display:flex;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+.mrow span:first-child{flex:1}.mrow .amt{min-width:96px;text-align:right}
+.site.closed{border:2px solid var(--line)}
+.site.closed .grand{font-size:22px}
+.closedinfo{margin:10px 0 0;color:var(--muted);font-size:14px}
+#fbar,.barwrap{max-width:640px;margin:0 auto;padding:10px 12px 0}
+.fbar{display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 12px;font-size:13.5px;line-height:1.35}
+.fbar span{flex:1;min-width:0}
+.fbar b{overflow-wrap:anywhere}
+.fbar button{flex:none;border:0;border-radius:9px;padding:9px 12px;font-weight:700;font-size:14px;background:var(--accent);color:#fff}
+.fbar.ok{color:var(--ok);background:rgba(46,125,79,.1);padding:7px 12px}
+.fbar.info{color:var(--muted);background:var(--card)}
+.fbar.warn2{background:var(--chip);border:1px solid var(--chipline);color:var(--ink)}
+.warn{background:#fdecea;color:#8a1f12;border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.5}}
+.calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:18px}
+.x:disabled{opacity:.3}
+.x{border:0;background:var(--field);color:var(--ink);width:38px;height:38px;border-radius:50%;font-size:16px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0}
+.day{position:relative;aspect-ratio:1;min-height:40px;border:0;border-radius:12px;background:var(--field);color:var(--ink);font-size:17px;font-weight:600}
+.day.we{color:var(--muted)}
+.day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.day.sel{background:var(--accent);color:#fff}
+.day.has::after{content:'';position:absolute;bottom:6px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--ok)}
+.day.sel.has::after{background:#fff}
+.legend{margin-top:10px;font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font-size:15px;opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<header>
+  <div class="monthbar">
+    <div class="mstrip" id="mstrip"></div>
+    <h1 id="title" hidden>Alle Baustellen</h1>
+    <button class="iconbtn plus" id="add" aria-label="Monate anlegen">+</button>
+  </div>
+  <nav class="tabs">
+    <button data-tab="erfassung" class="active">Erfassung</button>
+    <button data-tab="baustellen">Baustellen</button>
+  </nav>
+</header>
+<div id="ibar" class="barwrap" hidden></div>
+<div id="fbar"></div>
+<main id="main"></main>
+
+<div id="cal" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-label="Tag auswählen">
+    <div class="calhead"><b id="calTitle"></b><button type="button" class="x" id="calClose" aria-label="Schließen">✕</button></div>
+    <div class="calgrid" id="calGrid"></div>
+    <div class="legend">Grüner Punkt = an diesem Tag gibt es schon Einträge</div>
+  </div>
+</div>
+<div id="mpick" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-label="Monate anlegen">
+    <div class="calhead">
+      <button type="button" class="x" id="mpPrev" aria-label="Voriges Jahr">‹</button>
+      <b id="mpYear"></b>
+      <button type="button" class="x" id="mpNext" aria-label="Nächstes Jahr">›</button>
+    </div>
+    <div class="mgrid" id="mpGrid"></div>
+    <div class="legend">Tippe auf einen Monat, um ihn als Lasche anzulegen (zum Planen auch weit im Voraus). Nochmal tippen entfernt eine leere Lasche. Es bleiben nur die letzten 12 Monate erhalten, ältere werden automatisch gelöscht.</div>
+    <button type="button" class="btn primary" id="mpDone">Fertig</button>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+const KEY='baustunden-v1', START='2026-10';
+const MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const eur=new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
+const nf=new Intl.NumberFormat('de-DE',{maximumFractionDigits:2});
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+
+/* ---------- Speicher ---------- */
+let storageOk=true;
+try{localStorage.setItem('__t','1');localStorage.removeItem('__t')}catch(e){storageOk=false}
+function load(){
+  try{
+    const r=localStorage.getItem(KEY);
+    if(r){const s=JSON.parse(r);if(s&&Array.isArray(s.months)&&s.months.length&&Array.isArray(s.entries)&&s.sites)return s}
+  }catch(e){}
+  return {months:[START],current:START,entries:[],sites:{}};
+}
+function save(touch=true){
+  if(touch)S.savedAt=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(S));storageOk=true}
+  catch(e){storageOk=false}
+  if(fileState==='ok')scheduleWrite();
+  else if(!storageOk)toast('Achtung: Speichern nicht möglich!');
+}
+function validData(s){return !!(s&&Array.isArray(s.months)&&s.months.length&&Array.isArray(s.entries)&&s.sites&&typeof s.sites==='object')}
+
+/* ---------- Datendatei im Handyspeicher (Chrome/Android ab Version 132) ---------- */
+const FS_OK=typeof window.showSaveFilePicker==='function'&&typeof window.showOpenFilePicker==='function';
+let fileHandle=null,fileState='none',fileSavedAt=null,writeTimer=null,writeChain=Promise.resolve();
+const FILE_TYPES=[{description:'Baustunden-Daten',accept:{'application/json':['.json']}}];
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('baustunden',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function idbGet(k){const db=await idb();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function idbSet(k,v){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');v===undefined?t.objectStore('kv').delete(k):t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}
+async function permOf(h,ask){
+  try{
+    if(!h.queryPermission)return 'granted';
+    let p=await h.queryPermission({mode:'readwrite'});
+    if(p!=='granted'&&ask)p=await h.requestPermission({mode:'readwrite'});
+    return p;
+  }catch(e){return 'denied'}
+}
+async function writeFile(){
+  if(!fileHandle)return;
+  const w=await fileHandle.createWritable();
+  await w.write(JSON.stringify(S,null,1));await w.close();
+  fileSavedAt=Date.now();fileState='ok';
+}
+function flushWrite(){
+  clearTimeout(writeTimer);writeTimer=null;
+  writeChain=writeChain.then(writeFile).catch(e=>{fileState=e&&(e.name==='NotAllowedError'||e.name==='SecurityError')?'needperm':'error'}).finally(renderFileStatus);
+  return writeChain;
+}
+function scheduleWrite(){clearTimeout(writeTimer);writeTimer=setTimeout(flushWrite,400)}
+async function readFileData(h){const t=(await (await h.getFile()).text()).trim();if(!t)return null;const d=JSON.parse(t);return validData(d)?d:null}
+function adopt(d){S=d;housekeeping(false);editId=null;F=blankForm();render()}
+// beim Start: Datei lesen; ist sie neuer (oder sind die Browserdaten leer) → daraus laden
+async function syncFromFile(){
+  try{
+    const d=await readFileData(fileHandle);
+    if(d&&(!S.savedAt||(d.savedAt||0)>S.savedAt)){fileState='ok';adopt(d);toast('Daten aus Datei geladen')}
+    fileState='ok';await flushWrite();
+  }catch(e){fileState='error'}
+  renderFileStatus();
+}
+async function initFile(){
+  if(!FS_OK)return renderFileStatus();
+  try{fileHandle=await idbGet('handle')||null}catch(e){}
+  if(!fileHandle){fileState='none';return renderFileStatus()}
+  if(await permOf(fileHandle,false)==='granted')await syncFromFile();
+  else{fileState='needperm';renderFileStatus()}
+}
+async function reconnectFile(){
+  if(!fileHandle)return createFile();
+  if(await permOf(fileHandle,true)==='granted')await syncFromFile();
+  else toast('Zugriff auf die Datei nicht erlaubt');
+}
+async function createFile(){
+  try{
+    const h=await window.showSaveFilePicker({suggestedName:'baustunden-daten.json',types:FILE_TYPES});
+    fileHandle=h;await idbSet('handle',h);fileState='ok';
+    S.savedAt=S.savedAt||Date.now();await flushWrite();
+    toast('Datendatei angelegt – ab jetzt wird automatisch gespeichert');render();
+  }catch(e){if(e&&e.name!=='AbortError')toast('Datei konnte nicht angelegt werden')}
+}
+async function openFile(){
+  try{
+    const [h]=await window.showOpenFilePicker({types:FILE_TYPES,multiple:false});
+    if(await permOf(h,true)!=='granted')return toast('Kein Schreibzugriff auf die Datei');
+    const d=await readFileData(h);
+    if(d&&S.entries.length&&!confirm(`Daten aus „${h.name}“ laden?\n\nDie Daten, die gerade in der App sind, werden dadurch ersetzt.`))return;
+    fileHandle=h;await idbSet('handle',h);fileState='ok';
+    if(d)adopt(d);
+    await flushWrite();render();toast(d?'Datendatei geöffnet':'Datendatei verbunden');
+  }catch(e){if(e&&e.name!=='AbortError')toast('Datei ist keine gültige Baustunden-Datei')}
+}
+async function disconnectFile(){
+  if(!confirm('Verbindung zur Datendatei trennen?\n\nDie Datei bleibt auf dem Handy erhalten, wird aber nicht mehr automatisch aktualisiert.'))return;
+  if(writeTimer)await flushWrite();
+  fileHandle=null;fileState='none';try{await idbSet('handle',undefined)}catch(e){}
+  render();
+}
+function hhmm(t){const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())}
+function fileStatusHTML(){
+  if(!FS_OK)return `<div class="fbar info">Daten sind im Browser auf diesem Handy gespeichert. Für eine echte Datendatei die App in <b>Chrome</b> (ab Version 132) öffnen.</div>`;
+  const nm=fileHandle?esc(fileHandle.name):'';
+  if(fileState==='ok')return `<div class="fbar ok"><span>✓ Gespeichert in Datei <b>${nm}</b>${fileSavedAt?' · '+hhmm(fileSavedAt):''}</span></div>`;
+  if(fileState==='needperm')return `<div class="fbar warn2"><span>Datendatei <b>${nm}</b> – Zugriff bestätigen</span><button type="button" data-fs="reconnect">Verbinden</button></div>`;
+  if(fileState==='error')return `<div class="fbar warn2"><span>Speichern in die Datei fehlgeschlagen</span><button type="button" data-fs="reconnect">Erneut</button></div>`;
+  return `<div class="fbar warn2"><span>Daten liegen nur im Browser. Als Datei auf dem Handy sichern?</span><button type="button" data-fs="create">Datei anlegen</button></div>`;
+}
+function renderFileStatus(){
+  const b=$('#fbar');if(b){b.innerHTML=fileStatusHTML();bindFs(b)}
+  const c=$('#fcard');if(c){c.innerHTML=fileCardHTML();bindFs(c)}
+}
+function bindFs(root){
+  root.querySelectorAll('[data-fs]').forEach(x=>x.onclick=()=>({create:createFile,open:openFile,reconnect:reconnectFile,disconnect:disconnectFile})[x.dataset.fs]());
+}
+function fileCardHTML(){
+  if(!FS_OK)return `<h2>Datendatei</h2><p class="muted small">Dieser Browser kann nicht direkt in eine Datei schreiben. Öffne die App in Chrome (ab Version 132) – oder speichere regelmäßig eine Sicherung (unten).</p>`;
+  const nm=fileHandle?esc(fileHandle.name):'';
+  let h=`<h2>Datendatei auf dem Handy</h2>`;
+  if(fileHandle){
+    h+=`<p class="small">${fileState==='ok'?'✓ Verbunden mit':'Nicht verbunden:'} <b>${nm}</b>${fileSavedAt&&fileState==='ok'?' · zuletzt gespeichert '+hhmm(fileSavedAt):''}</p>
+      <p class="muted small">Jede Änderung wird automatisch in diese Datei geschrieben. Sie liegt im Handyspeicher (z. B. unter „Dokumente“) und bleibt erhalten, auch wenn Browserdaten gelöscht werden. Danach einfach hier „Vorhandene Datendatei öffnen“ wählen.</p>
+      ${fileState!=='ok'?'<button type="button" class="btn primary" data-fs="reconnect">Wieder verbinden</button>':''}
+      <button type="button" class="btn ghost" data-fs="open">Andere Datendatei öffnen</button>
+      <button type="button" class="btn ghost small" data-fs="disconnect">Verbindung trennen</button>`;
+  }else{
+    h+=`<p class="muted small">Leg eine Datendatei im Handyspeicher an (am besten im Ordner „Dokumente“). Danach speichert die App jede Änderung automatisch dort – die Daten sind dann nicht mehr nur im Browser.</p>
+      <button type="button" class="btn primary" data-fs="create">Neue Datendatei anlegen</button>
+      <button type="button" class="btn ghost" data-fs="open">Vorhandene Datendatei öffnen</button>`;
+  }
+  return h;
+}
+let S=load();
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+
+/* ---------- Helfer ---------- */
+const MSHORT=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const KEEP_MONTHS=12;
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function todayYM(){return todayISO().slice(0,7)}
+function addMonths(ym,n){let [y,m]=ym.split('-').map(Number);const t=y*12+(m-1)+n;return Math.floor(t/12)+'-'+pad(t%12+1)}
+function cutoffYM(){return addMonths(todayYM(),-KEEP_MONTHS)}
+
+/* ---------- Monate pflegen + 12-Monats-Historie ---------- */
+function normalizeMonths(){
+  S.months=[...new Set(S.months)].sort();
+  if(!S.months.length)S.months=[todayYM()<START?START:todayYM()];
+  if(!S.months.includes(S.current)){
+    const t=todayYM();S.current=S.months.includes(t)?t:S.months[S.months.length-1];
+  }
+}
+function housekeeping(interactive){
+  const t=todayYM();
+  // aktuellen Kalendermonat automatisch als Lasche anlegen
+  if(t>=START&&!S.months.includes(t))S.months.push(t);
+  const cut=cutoffYM();
+  const oldEntries=S.entries.filter(e=>e.date.slice(0,7)<cut);
+  const oldMonths=S.months.filter(m=>m<cut);
+  if(oldEntries.length||oldMonths.length){
+    if(oldEntries.length&&interactive){
+      const ms=[...new Set(oldEntries.map(e=>monthLabel(e.date.slice(0,7))))].join(', ');
+      if(confirm(`${oldEntries.length===1?'1 Eintrag ist':oldEntries.length+' Einträge sind'} älter als 12 Monate (${ms}) und werden jetzt gelöscht.\n\nVorher eine Sicherung speichern?`))backup();
+    }
+    S.entries=S.entries.filter(e=>e.date.slice(0,7)>=cut);
+    S.months=S.months.filter(m=>m>=cut);
+    const cutTime=new Date(+cut.slice(0,4),+cut.slice(5)-1,1).getTime();
+    Object.keys(S.sites).forEach(n=>{
+      const s=S.sites[n];
+      if(!S.entries.some(e=>e.site===n)&&(s.lastUsed||s.created||0)<cutTime)delete S.sites[n];
+    });
+  }
+  normalizeMonths();save(false);
+}
+function monthLabel(ym){const [y,m]=ym.split('-').map(Number);return MONTHS[m-1]+' '+y}
+function nextYM(ym){let [y,m]=ym.split('-').map(Number);m++;if(m>12){m=1;y++}return y+'-'+pad(m)}
+function dateLabel(iso,long){
+  const [y,m,d]=iso.split('-').map(Number);const wd=WD[new Date(y,m-1,d).getDay()];
+  return long?`${wd}, ${pad(d)}.${pad(m)}.${y}`:`${wd} ${pad(d)}.${pad(m)}.`;
+}
+function parseNum(v){v=String(v??'').trim().replace(/\s/g,'').replace(',','.');if(v==='')return NaN;return Number(v)}
+function fmtH(h){return nf.format(h)+' Std'}
+function findSite(name){const n=String(name||'').trim().toLowerCase();if(!n)return null;return Object.keys(S.sites).find(k=>k.toLowerCase()===n)||null}
+function rateOf(name){const s=S.sites[name];return s&&typeof s.rate==='number'&&!isNaN(s.rate)?s.rate:null}
+function rateStr(r){return r==null||isNaN(r)?'':String(r).replace('.',',')}
+function monthEntries(ym){return S.entries.filter(e=>e.date.slice(0,7)===ym).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0))}
+function siteEntries(name){return S.entries.filter(e=>e.site===name)}
+function sumH(list){return list.reduce((a,e)=>a+(+e.hours||0),0)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200)}
+
+/* ---------- Zustand Formular ---------- */
+let tab='erfassung', editId=null;
+function blankForm(keepDate){const t=todayISO();return {date:keepDate||(t.slice(0,7)===S.current?t:''),site:'',hours:'',rate:'',note:''}}
+let F=blankForm();
+
+/* ---------- Rendern ---------- */
+function renderStrip(){
+  const st=$('#mstrip'),t=todayYM();
+  st.innerHTML=S.months.map(ym=>{const [y,m]=ym.split('-');
+    return `<button type="button" class="mtab${ym===S.current?' active':''}${ym>t?' fut':''}" data-ym="${ym}">${MSHORT[+m-1]}<small>${y}</small></button>`}).join('');
+  st.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{if(b.dataset.ym!==S.current)gotoMonth(b.dataset.ym)});
+  const a=st.querySelector('.active');
+  if(a)st.scrollLeft=a.offsetLeft-st.clientWidth/2+a.offsetWidth/2;
+}
+function render(){
+  $('#title').hidden=tab==='erfassung';
+  renderStrip();
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.body.classList.toggle('tab-bst',tab==='baustellen');
+  const warn=storageOk?'':'<div class="warn"><b>Speicher nicht verfügbar.</b> Dieser Browser erlaubt hier kein dauerhaftes Speichern (z. B. privater Modus). Bitte die Datei in Chrome/Safari im normalen Modus öffnen.</div>';
+  $('#main').innerHTML=warn+(tab==='erfassung'?viewErfassung():viewBaustellen());
+  if(tab==='erfassung')bindErfassung();else bindBaustellen();
+  renderFileStatus();
+}
+
+function dateBtnHTML(){return (F.date?esc(dateLabel(F.date,true)):'Tag auswählen …')+'<span aria-hidden="true">📅</span>'}
+
+function viewErfassung(){
+  const ents=monthEntries(S.current);
+  return `
+  <section class="card">
+    <h2>${editId?'Eintrag bearbeiten':'Neuer Eintrag'}</h2>
+    <label>Datum</label>
+    <button type="button" class="field datebtn ${F.date?'':'empty'}" id="fDate">${dateBtnHTML()}</button>
+    <label for="fSite">Baustelle</label>
+    <input id="fSite" type="text" autocomplete="off" autocapitalize="sentences" placeholder="z. B. Musterstraße 12" value="${esc(F.site)}">
+    <div class="chips" id="chips"></div>
+    <div class="row">
+      <div><label for="fHours">Stunden</label><input id="fHours" type="text" inputmode="decimal" placeholder="0" value="${esc(F.hours)}"></div>
+      <div><label for="fRate">Stundensatz (€)</label><input id="fRate" type="text" inputmode="decimal" placeholder="0,00" value="${esc(F.rate)}"></div>
+    </div>
+    <div class="preview" id="preview"></div>
+    <label for="fNote">Bemerkung / Tätigkeiten</label>
+    <textarea id="fNote" placeholder="Was wurde gemacht?">${esc(F.note)}</textarea>
+    <button type="button" class="btn primary" id="fSave">${editId?'Änderung speichern':'Eintrag speichern'}</button>
+    ${editId?`<div class="row"><button type="button" class="btn ghost" id="fCancel">Abbrechen</button><button type="button" class="btn danger" id="fDel">Löschen</button></div>`:''}
+  </section>
+  ${viewMonthSummary(ents)}
+  <section class="card">
+    <h2>Einträge ${esc(monthLabel(S.current))} (${ents.length})</h2>
+    <div class="calc">
+    ${ents.length?ents.map(e=>`
+      <div class="erow">
+        <button type="button" class="entry ${e.id===editId?'editing':''}" data-id="${e.id}" data-site="${esc(e.site)}" data-h="${+e.hours}">
+          <span class="ed">${dateLabel(e.date)}</span>
+          <span class="eb"><b>${esc(e.site)}</b>${e.note?`<small>${esc(e.note)}</small>`:''}${e.date>todayISO()?'<span class="plan">geplant</span>':''}</span>
+          <span class="eh">${fmtH(+e.hours)}<small class="amt"></small></span>
+        </button>
+        <button type="button" class="trash" data-del="${e.id}" aria-label="Eintrag löschen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>
+      </div>`).join(''):'<p class="muted">Noch keine Einträge in diesem Monat.</p>'}
+    </div>
+    ${ents.length?'<p class="muted small">Tippe auf einen Eintrag, um ihn zu bearbeiten – 🗑 löscht ihn.</p>':''}
+  </section>`;
+}
+
+function viewMonthSummary(ents){
+  if(!ents.length){
+    if(S.months.length>1)
+      return `<section class="card"><p class="muted small">Dieser Monat ist noch leer.</p><button type="button" class="btn ghost small" id="rmMonth">Leere Monatslasche entfernen</button></section>`;
+    return '';
+  }
+  const by={};ents.forEach(e=>by[e.site]=(by[e.site]||0)+(+e.hours||0));
+  const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,'de'));
+  return `<section class="card"><h2>Summe je Baustelle – ${esc(monthLabel(S.current))}</h2>
+  <div class="calc">
+    ${names.map(n=>{const cl=S.sites[n]&&S.sites[n].closed;return `
+    <div class="sumrow" data-site="${esc(n)}" data-h="${by[n]}">
+      <div class="sn">${esc(n)}${cl?' <em class="badge done">abgeschlossen</em>':''}</div>
+      <div class="sline"><span>${fmtH(by[n])} ×</span><input class="rate" data-rate="${esc(n)}" inputmode="decimal" value="${esc(rateStr(rateOf(n)))}" placeholder="–" ${cl?'disabled':''}><span>€</span><b class="amt"></b></div>
+    </div>`}).join('')}
+    <div class="sumtotal"><span>Monat gesamt</span><span>${fmtH(sumH(ents))}</span><b class="grand"></b></div>
+    <p class="miss muted small" hidden>Baustellen ohne Stundensatz sind im Betrag nicht enthalten.</p>
+  </div></section>`;
+}
+
+function viewBaustellen(){
+  const names=Object.keys(S.sites).sort((a,b)=>(!!S.sites[a].closed-!!S.sites[b].closed)||a.localeCompare(b,'de'));
+  let html='';
+  if(!names.length)html+='<section class="card"><p class="muted">Noch keine Baustellen. Sie werden automatisch angelegt, sobald du einen Eintrag speicherst.</p></section>';
+  names.forEach(n=>{
+    const s=S.sites[n],ents=siteEntries(n),byM={};
+    ents.forEach(e=>{const ym=e.date.slice(0,7);byM[ym]=(byM[ym]||0)+(+e.hours||0)});
+    const months=Object.keys(byM).sort(),H=sumH(ents);
+    html+=`<section class="card site ${s.closed?'closed':''}">
+      <div class="sitehead"><h3>${esc(n)}</h3><span class="badge ${s.closed?'done':'open'}">${s.closed?'Abgeschlossen':'Offen'}</span></div>
+      <div class="raterow"><label>Stundensatz</label><input class="rate" data-rate="${esc(n)}" inputmode="decimal" value="${esc(rateStr(rateOf(n)))}" placeholder="0,00" ${s.closed?'disabled':''}><span>€ / Std</span></div>
+      <div class="calc">
+        ${months.map(ym=>`<div class="mrow" data-site="${esc(n)}" data-h="${byM[ym]}"><span>${esc(monthLabel(ym))}</span><span>${fmtH(byM[ym])}</span><b class="amt"></b></div>`).join('')||'<p class="muted small">Keine Einträge</p>'}
+        <div class="gesamt"><span>${s.closed?'Gesamtsumme':'Bisher gesamt'}</span><span>${fmtH(H)}</span><b class="grand"></b></div>
+        <p class="miss muted small" hidden>Stundensatz fehlt – Betrag wird nicht berechnet.</p>
+      </div>
+      ${s.closed
+        ?`<p class="closedinfo">Abgeschlossen am ${esc(dateLabel(s.closedAt||todayISO(),true))}</p><button type="button" class="btn ghost" data-reopen="${esc(n)}">Wieder öffnen</button>`
+        :`<button type="button" class="btn primary" data-close="${esc(n)}">Baustelle abschließen</button>`}
+      ${!ents.length?`<button type="button" class="btn ghost small" data-delsite="${esc(n)}">Baustelle entfernen</button>`:''}
+    </section>`;
+  });
+  html+=`<section class="card" id="fcard">${fileCardHTML()}</section>
+  <section class="card"><h2>Export &amp; Sicherung</h2>
+    <p class="muted small">Zusätzlich kannst du ab und zu eine Sicherung z. B. per Mail an dich selbst schicken.</p>
+    <button type="button" class="btn" id="exCsv">Tabelle exportieren (CSV für Excel)</button>
+    <button type="button" class="btn" id="exJson">Sicherung speichern</button>
+    <button type="button" class="btn ghost" id="imJson">Sicherung laden</button>
+  </section>`;
+  return html;
+}
+
+/* ---------- Live-Summen ---------- */
+function recalcAll(){
+  document.querySelectorAll('.calc').forEach(c=>{
+    let sum=0,miss=false;
+    c.querySelectorAll('[data-h]').forEach(r=>{
+      const rt=rateOf(r.dataset.site),a=r.querySelector('.amt'),v=+r.dataset.h;
+      if(!a)return;
+      if(rt==null){a.textContent='–';miss=true}else{a.textContent=eur.format(v*rt);sum+=v*rt}
+    });
+    const g=c.querySelector('.grand');if(g)g.textContent=eur.format(sum);
+    const m=c.querySelector('.miss');if(m)m.hidden=!miss;
+  });
+}
+function bindRates(){
+  document.querySelectorAll('input.rate').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const n=inp.dataset.rate,v=parseNum(inp.value);
+      if(!S.sites[n])S.sites[n]={};
+      S.sites[n].rate=isNaN(v)?null:v;save();
+      document.querySelectorAll('input.rate').forEach(o=>{if(o!==inp&&o.dataset.rate===n)o.value=inp.value});
+      if(findSite(F.site)===n){F.rate=inp.value;const fr=$('#fRate');if(fr)fr.value=inp.value;updatePreview()}
+      recalcAll();
+    });
+  });
+}
+
+/* ---------- Erfassung ---------- */
+let rateAuto=false;
+function applySiteRate(){
+  const k=findSite(F.site),fr=$('#fRate');
+  if(k&&rateOf(k)!=null){F.rate=rateStr(rateOf(k));rateAuto=true;if(fr)fr.value=F.rate}
+  else if(rateAuto){F.rate='';rateAuto=false;if(fr)fr.value=''}
+}
+function bindErfassung(){
+  $('#fDate').onclick=openCal;
+  const site=$('#fSite');
+  site.addEventListener('input',()=>{F.site=site.value;applySiteRate();renderChips();updatePreview()});
+  $('#fHours').addEventListener('input',e=>{F.hours=e.target.value;updatePreview()});
+  $('#fRate').addEventListener('input',e=>{F.rate=e.target.value;rateAuto=false;updatePreview()});
+  $('#fNote').addEventListener('input',e=>{F.note=e.target.value});
+  $('#fSave').onclick=saveEntry;
+  if(editId){
+    $('#fCancel').onclick=()=>{editId=null;F=blankForm(F.date);render()};
+    $('#fDel').onclick=deleteEntry;
+  }
+  document.querySelectorAll('.entry').forEach(b=>b.onclick=()=>startEdit(b.dataset.id));
+  document.querySelectorAll('.trash').forEach(b=>b.onclick=()=>delEntry(b.dataset.del));
+  const rm=$('#rmMonth');if(rm)rm.onclick=removeMonth;
+  bindRates();renderChips();updatePreview();recalcAll();
+}
+function renderChips(){
+  const box=$('#chips');if(!box)return;
+  const q=F.site.trim().toLowerCase();
+  let list=Object.keys(S.sites).filter(n=>!S.sites[n].closed&&!S.sites[n].hidden);
+  if(q)list=list.filter(n=>n.toLowerCase().includes(q)&&n.toLowerCase()!==q);
+  list.sort((a,b)=>(S.sites[b].lastUsed||0)-(S.sites[a].lastUsed||0));
+  list=list.slice(0,8);
+  const bin='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>';
+  let h=list.map(n=>`<span class="chipw"><button type="button" class="chip" data-n="${esc(n)}">${esc(n)}</button><button type="button" class="chipx" data-forget="${esc(n)}" aria-label="${esc(n)} aus Vorschlägen löschen">${bin}</button></span>`).join('');
+  if(q&&!findSite(q)&&!list.length)h='<span class="newhint">＋ Neue Baustelle – wird beim Speichern gemerkt</span>';
+  const k=findSite(q);if(k&&S.sites[k].closed)h='<span class="newhint">Diese Baustelle ist abgeschlossen</span>';
+  box.innerHTML=h;
+  box.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    F.site=c.dataset.n;$('#fSite').value=F.site;applySiteRate();renderChips();updatePreview();$('#fHours').focus();
+  });
+  box.querySelectorAll('.chipx').forEach(c=>c.onclick=()=>forgetSite(c.dataset.forget));
+}
+function forgetSite(n){
+  const s=S.sites[n];if(!s)return;
+  const cnt=siteEntries(n).length;
+  if(!cnt){
+    if(!confirm(`„${n}“ aus den gemerkten Baustellen löschen?`))return;
+    delete S.sites[n];
+  }else{
+    if(!confirm(`„${n}“ aus den Vorschlägen entfernen?\n\n${cnt===1?'Der Eintrag bleibt':'Die '+cnt+' Einträge bleiben'} mit Stundensatz und Summen erhalten. Gibst du den Namen später wieder ein, wird sie automatisch wieder vorgeschlagen.`))return;
+    s.hidden=true;
+  }
+  save();renderChips();toast('Aus Vorschlägen gelöscht');
+}
+function updatePreview(){
+  const p=$('#preview');if(!p)return;
+  const h=parseNum(F.hours),r=parseNum(F.rate),k=findSite(F.site);
+  const hv=!isNaN(h)&&h>0?h:0;
+  let out='';
+  if(hv&&!isNaN(r))out+=`<div>Dieser Eintrag: ${fmtH(hv)} × ${eur.format(r)} = <b>${eur.format(hv*r)}</b></div>`;
+  if(k){
+    const rt=!isNaN(r)?r:rateOf(k);
+    const hm=sumH(monthEntries(S.current).filter(e=>e.site===k&&e.id!==editId))+hv;
+    const ht=sumH(siteEntries(k).filter(e=>e.id!==editId))+hv;
+    out+=`<div>${esc(k)} – ${esc(MONTHS[+S.current.slice(5)-1])}: <b>${fmtH(hm)}</b>${rt!=null?` · <b>${eur.format(hm*rt)}</b>`:''}</div>`;
+    if(ht!==hm)out+=`<div>${esc(k)} – gesamt: <b>${fmtH(ht)}</b>${rt!=null?` · <b>${eur.format(ht*rt)}</b>`:''}</div>`;
+  }
+  p.innerHTML=out;
+}
+function saveEntry(){
+  const name=F.site.trim(),r=parseNum(F.rate);let h=parseNum(F.hours);
+  if(!F.date||F.date.slice(0,7)!==S.current)return toast('Bitte Datum auswählen');
+  if(!name)return toast('Bitte Baustelle eingeben');
+  const planned=F.date>todayISO();
+  if(isNaN(h)&&planned&&!F.hours.trim())h=0;
+  if(isNaN(h)||h<0||h>24||(h===0&&!planned))return toast('Bitte gültige Stundenzahl eingeben');
+  if(F.rate.trim()&&(isNaN(r)||r<0))return toast('Stundensatz ist ungültig');
+  let k=findSite(name);
+  if(k&&S.sites[k].closed){
+    if(!confirm(`Die Baustelle „${k}“ ist abgeschlossen.\nWieder öffnen und Eintrag speichern?`))return;
+    S.sites[k].closed=false;delete S.sites[k].closedAt;
+  }
+  if(!k){k=name;S.sites[k]={rate:null,created:Date.now()}}
+  if(!isNaN(r))S.sites[k].rate=r;
+  S.sites[k].lastUsed=Date.now();delete S.sites[k].hidden;
+  const wasEdit=!!editId;
+  if(editId){const e=S.entries.find(x=>x.id===editId);if(e)Object.assign(e,{date:F.date,site:k,hours:h,note:F.note.trim()})}
+  else S.entries.push({id:uid(),date:F.date,site:k,hours:h,note:F.note.trim(),created:Date.now()});
+  editId=null;save();
+  F=blankForm(F.date);render();
+  toast(wasEdit?'Änderung gespeichert':'Eintrag gespeichert');
+}
+function startEdit(id){
+  const e=S.entries.find(x=>x.id===id);if(!e)return;
+  editId=id;
+  F={date:e.date,site:e.site,hours:String(e.hours).replace('.',','),rate:rateStr(rateOf(e.site)),note:e.note||''};
+  render();window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteEntry(){delEntry(editId)}
+function delEntry(id){
+  const e=S.entries.find(x=>x.id===id);if(!e)return;
+  if(!confirm(`Eintrag löschen?\n\n${dateLabel(e.date,true)} · ${e.site} · ${fmtH(+e.hours)}`))return;
+  S.entries=S.entries.filter(x=>x.id!==id);
+  if(editId===id){editId=null;F=blankForm(F.date)}
+  save();render();toast('Eintrag gelöscht');
+}
+function removeMonth(){
+  if(!confirm(`Monatslasche ${monthLabel(S.current)} entfernen?`))return;
+  const i=S.months.indexOf(S.current);S.months.splice(i,1);
+  gotoMonth(S.months[Math.min(i,S.months.length-1)]);
+}
+
+/* ---------- Monate anlegen ---------- */
+let pickYear=+S.current.slice(0,4),lastAdded=null;
+function openPicker(){pickYear=+S.current.slice(0,4);lastAdded=null;renderPicker();$('#mpick').hidden=false}
+function renderPicker(){
+  const cut=cutoffYM(),t=todayYM();
+  $('#mpYear').textContent=pickYear;
+  $('#mpPrev').disabled=pickYear<=+cut.slice(0,4);
+  let h='';
+  for(let m=1;m<=12;m++){
+    const ym=pickYear+'-'+pad(m),on=S.months.includes(ym),n=monthEntries(ym).length;
+    h+=`<button type="button" class="mbtn${on?' on':''}" data-ym="${ym}" ${ym<cut?'disabled':''}>${MONTHS[m-1]}<small>${on?(n?n+' Eintr.':'aktiv'):(ym===t?'heute':'&nbsp;')}</small></button>`;
+  }
+  $('#mpGrid').innerHTML=h;
+  $('#mpGrid').querySelectorAll('.mbtn').forEach(b=>b.onclick=()=>{
+    const ym=b.dataset.ym;
+    if(!S.months.includes(ym)){S.months.push(ym);lastAdded=ym}
+    else{
+      if(monthEntries(ym).length)return toast('Monat hat Einträge – kann nicht entfernt werden');
+      if(S.months.length<=1)return toast('Mindestens ein Monat bleibt');
+      S.months=S.months.filter(x=>x!==ym);if(lastAdded===ym)lastAdded=null;
+    }
+    normalizeMonths();save();renderPicker();renderStrip();
+  });
+}
+$('#mpPrev').onclick=()=>{pickYear--;renderPicker()};
+$('#mpNext').onclick=()=>{pickYear++;renderPicker()};
+function closePicker(){
+  $('#mpick').hidden=true;
+  if(lastAdded&&S.months.includes(lastAdded))gotoMonth(lastAdded);else{normalizeMonths();render()}
+}
+$('#mpDone').onclick=closePicker;
+$('#mpick').addEventListener('click',e=>{if(e.target.id==='mpick')closePicker()});
+
+/* ---------- Kalender ---------- */
+function openCal(){
+  const [y,m]=S.current.split('-').map(Number);
+  const days=new Date(y,m,0).getDate(),off=(new Date(y,m-1,1).getDay()+6)%7;
+  const used=new Set(monthEntries(S.current).map(e=>e.date)),t=todayISO();
+  let h=['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<span class="wd">${d}</span>`).join('');
+  for(let i=0;i<off;i++)h+='<span></span>';
+  for(let d=1;d<=days;d++){
+    const iso=`${y}-${pad(m)}-${pad(d)}`,dow=(off+d-1)%7;
+    h+=`<button type="button" class="day${iso===F.date?' sel':''}${iso===t?' today':''}${used.has(iso)?' has':''}${dow>=5?' we':''}" data-d="${iso}">${d}</button>`;
+  }
+  $('#calGrid').innerHTML=h;$('#calTitle').textContent=monthLabel(S.current);
+  $('#cal').hidden=false;
+  $('#calGrid').querySelectorAll('.day').forEach(b=>b.onclick=()=>{
+    F.date=b.dataset.d;closeCal();
+    const db=$('#fDate');if(db){db.innerHTML=dateBtnHTML();db.classList.remove('empty')}
+  });
+}
+function closeCal(){$('#cal').hidden=true}
+$('#calClose').onclick=closeCal;
+$('#cal').addEventListener('click',e=>{if(e.target.id==='cal')closeCal()});
+
+/* ---------- Baustellen ---------- */
+function bindBaustellen(){
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{
+    const n=b.dataset.close,H=sumH(siteEntries(n)),r=rateOf(n);
+    if(!confirm(`Baustelle „${n}“ abschließen?\n\nGesamt: ${fmtH(H)}${r!=null?' · '+eur.format(H*r):' (kein Stundensatz)'}`))return;
+    S.sites[n].closed=true;S.sites[n].closedAt=todayISO();save();render();toast('Baustelle abgeschlossen');
+  });
+  document.querySelectorAll('[data-reopen]').forEach(b=>b.onclick=()=>{
+    const n=b.dataset.reopen;S.sites[n].closed=false;delete S.sites[n].closedAt;save();render();toast('Baustelle wieder offen');
+  });
+  document.querySelectorAll('[data-delsite]').forEach(b=>b.onclick=()=>{
+    const n=b.dataset.delsite;if(!confirm(`„${n}“ entfernen?`))return;
+    delete S.sites[n];save();render();
+  });
+  $('#exCsv').onclick=exportCsv;
+  $('#exJson').onclick=backup;
+  $('#imJson').onclick=()=>$('#importFile').click();
+  bindRates();recalcAll();
+}
+function backup(){download(`baustunden-sicherung-${todayISO()}.json`,JSON.stringify(S,null,1),'application/json')}
+function download(name,text,type){
+  const b=new Blob([text],{type}),u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1500);
+}
+function exportCsv(){
+  const q=v=>{v=String(v??'');return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const dec=n=>n==null||isNaN(n)?'':String(Math.round(n*100)/100).replace('.',',');
+  const rows=[['Datum','Monat','Baustelle','Stunden','Stundensatz €','Betrag €','Bemerkung','Status']];
+  [...S.entries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    const r=rateOf(e.site),[y,m,d]=e.date.split('-');
+    rows.push([`${d}.${m}.${y}`,monthLabel(e.date.slice(0,7)),e.site,dec(+e.hours),dec(r),r==null?'':dec(e.hours*r),e.note||'',S.sites[e.site]&&S.sites[e.site].closed?'abgeschlossen':'offen']);
+  });
+  download(`baustunden-${todayISO()}.csv`,'\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8');
+}
+$('#importFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    const s=JSON.parse(await f.text());
+    if(!s||!Array.isArray(s.months)||!s.months.length||!Array.isArray(s.entries)||typeof s.sites!=='object')throw 0;
+    if(!confirm('Sicherung laden? Die aktuellen Daten auf diesem Gerät werden ersetzt.'))return;
+    S=s;housekeeping(false);save();editId=null;F=blankForm();render();toast('Sicherung geladen');
+  }catch(err){toast('Datei ist keine gültige Sicherung')}
+};
+
+/* ---------- Navigation ---------- */
+function gotoMonth(ym){S.current=ym;editId=null;F=blankForm();save();render();window.scrollTo(0,0)}
+$('#add').onclick=openPicker;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;editId=null;render();window.scrollTo(0,0)});
+let lastDay=todayISO();
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&writeTimer)flushWrite();
+  if(document.visibilityState==='visible'&&todayISO()!==lastDay){lastDay=todayISO();housekeeping(true);render()}
+});
+window.addEventListener('pagehide',()=>{if(writeTimer)flushWrite()});
+
+housekeeping(true);
+F=blankForm();
+render();
+initFile();
+
+/* ---------- Als App installieren (wenn über eine Webadresse geöffnet) ---------- */
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();installEvt=e;
+  const b=$('#ibar');
+  b.innerHTML='<div class="fbar warn2"><span>📲 Baustunden als App auf dem Startbildschirm installieren</span><button type="button" id="instBtn">Installieren</button></div>';
+  b.hidden=false;
+  $('#instBtn').onclick=async()=>{b.hidden=true;installEvt.prompt();try{await installEvt.userChoice}catch(_){}installEvt=null};
+});
+window.addEventListener('appinstalled',()=>{$('#ibar').hidden=true;toast('App installiert – Symbol ist auf dem Startbildschirm')});
+</script>
+</body>
+</html>
